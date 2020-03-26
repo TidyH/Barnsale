@@ -1,0 +1,39 @@
+import requests
+import re
+from bs4 import BeautifulSoup
+
+
+url = "http://sfrlinc.com/web/previous-sales/"
+headers = {'User-Agent': 'Mozilla/5.0'}
+r = requests.get(url, headers=headers)
+data = r.text
+soup = BeautifulSoup(data, 'html.parser')
+
+
+#Find last record entered
+#date = date.today()
+#print(date)
+
+
+#example code for listing all hyperlinks
+#for link in soup.find_all('a'):
+#    print(link.get('href'))
+
+
+#alternate example code for listing links with regex
+#for link in soup.find_all('a', href=re.compile('^http://sfrlinc.com/web/project/')):
+#    print(link.get('href'))
+
+#list to hold links
+linklist = []
+
+#finds all links and formats them with just hyperlink and stores them in the linklist variable
+for link in soup.find_all('a'):
+    linklist.append(link.get('href'))
+
+#finds specific date hyperlink
+#TODO: turn december-23 into a smart variable so it can run on its own
+#Sheep sales happen every wednseday and are formated as MONTH-## or MONTH-##-## indicating a range of dates
+for links in linklist:
+    if 'december-23' in links:
+        print(links)
