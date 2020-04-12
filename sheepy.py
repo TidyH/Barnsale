@@ -1,7 +1,7 @@
 import requests
 import re
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import date
 import os.path
 import pandas as pd
 
@@ -60,5 +60,12 @@ for link in linklist:
         df = pd.DataFrame(output, columns = ['Lot','Animal','hweight','$perhweight'])
         df = df.iloc[0:]
         print(df)
-
-
+        
+        #append link to site_history
+        file = open('site_history', 'a')
+        file.write(link)
+        
+        #save dataframe as a pickle file
+        today = date.today()
+        date = today.strftime("%m-%d-%Y")
+        df.to_pickle(date)
