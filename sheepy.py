@@ -3,23 +3,13 @@ import re
 from bs4 import BeautifulSoup
 from datetime import datetime
 import os.path
+import pandas as pd
 
 url = "http://sfrlinc.com/web/previous-sales/"
 headers = {'User-Agent': 'Mozilla/5.0'}
 r = requests.get(url, headers=headers)
 data = r.text
 soup = BeautifulSoup(data, 'html.parser')
-
-
-#Find last record entered
-#date = date.today()
-#print(date)
-date_month_check = datetime.today().strftime('%B')
-date_day_check = datetime.today().strftime('%d')
-#Debugging
-#print(date_month_check)
-#print(date_day_check)
-#print('next check')
 
 #example code for listing all hyperlinks
 #for link in soup.find_all('a'):
@@ -37,37 +27,38 @@ linklist = []
 for link in soup.find_all('a'):
     linklist.append(link.get('href'))
 
-#Debugging
-#print(linklist)
-#print('next check')
-
-#finds specific date hyperlink
-#TODO: turn december-23 into a smart variable so it can run on its own
-#Sheep sales happen every wednseday and are formated as MONTH-## or MONTH-##-## indicating a range of dates
-#for links in linklist:
-#    if 'december-23' in links:
-#        print(links)
-
-#checks date to see if their is a greater value
-#matching_months = []
-#for i in linklist:
-#    if i.__contains__(date_month_check.lower()):
-#        matching_months.append(i)
-#print(matching_months)
-
-#This gets me just march entries, but how do i figure out how to get a specific week?
-#get last week's dates in a list and see if the links contain atleast one of them?
-#another idea was to keep a list from the previous check and do a diff on what is new then overwrite the history
-dif = []
 #save the list into history file to be rechecked when run
 if os.path.isfile('site_history'):
     file = open('site_history', 'r')
     file_listed = file.readlines()
-#todo compare to lists and print the difference.
-#    if file_listed != linklist:
-#        diff = list(set(linklist) - set(file_listed))
-#        print(diff)
 else:
     file = open('site_history', 'w')
     for link in linklist:
-        file.write(link + '\n')
+        file.write(link + "\n")
+    file = open('site_history', 'r')
+    file_listed = file.readlines()
+
+#check new entry to see if it has a match in the saved copy
+with open('site_history') as f:
+    lines = f.read().splitlines()
+
+for link in linklist:
+    if link not in lines:
+        print(link)
+        #If we have a new entry, we need to move to that web page and collect data
+        url = link
+        r = requests.get(url, headers=headers)
+        data = r.text
+        soup = BeautifulSoup(data, 'html.parser')
+        tables = soup.select('table')[5]
+        rows = tables.find_all('tr')
+        output = []
+        for row in rows:
+            cols = row.find_all('td')
+            cols = [item.text.strip() for item in cols]
+            output.append([item for item in cols if item])
+        df = pd.DataFrame(output, columns = ['Lot','Animal','hweight','$perhweight'])
+        df = df.iloc[0:]
+        print(df)
+
+
